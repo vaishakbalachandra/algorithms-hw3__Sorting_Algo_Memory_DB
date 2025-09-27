@@ -1,0 +1,6 @@
+java/out/
+*.class
+perf/
+*.txt
+.DS_Store
+*.swp

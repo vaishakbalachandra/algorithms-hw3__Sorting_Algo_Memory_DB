@@ -1,0 +1,115 @@
+---------------------
+
+JAVA
+
+---------------------
+
+cd /home/balachv/IndividualHomework3/algorithms-hw3
+
+# compile (classes go to java/out)
+javac -d java/out java/*.java
+
+# run (prompts will appear exactly like on Windows)
+java -cp java/out Main
+
+
+
+/home/balachv/IndividualHomework3/algorithms-hw3/data/student-data.csv
+
+
+--------------
+
+Julia
+
+--------------
+
+cd /home/balachv/IndividualHomework3/algorithms-hw3
+julia julia/main.jl
+
+
+/home/balachv/IndividualHomework3/algorithms-hw3/data/student-data.csv
+
+-------------------------------------------------------------------------------------------
+
+CPU + DISK
+
+_____________________________________________________________________________________________
+
+```` ONE TIME
+
+cd /home/balachv/IndividualHomework3/algorithms-hw3
+sudo apt-get update
+sudo apt-get install -y sysstat   # gives you iostat and pidstat
+mkdir -p perf                     # where we’ll save logs
+
+
+-----------------------------------------------------------------------------------------------
+
+cd /home/balachv/IndividualHomework3/algorithms-hw3 || { echo "Project folder not found"; exit 1; }
+
+# deps for iostat/pidstat (first run only; safe to re-run)
+sudo apt-get update && sudo apt-get install -y sysstat
+
+# where we keep logs
+mkdir -p perf
+
+# compile Java (safe to re-run)
+mkdir -p java/out
+javac -d java/out java/*.java
+
+# ask once for the column (name or 0-based index)
+read -rp "Column to sort by (name or 0-based index) [Age]: " COL
+COL=${COL:-Age}
+echo "Using column: $COL"
+
+# ---- JULIA: bubble (NO EXPORT: 'q') ----
+iostat -dx 1 10 > perf/iostat_julia_bubble.txt & IOP=$!
+/usr/bin/time -v julia julia/main.jl 2> perf/julia_bubble_time.txt <<EOF
+data/student-data.csv
+b
+$COL
+q
+EOF
+wait $IOP
+
+# ---- JULIA: insertion (NO EXPORT: 'q') ----
+iostat -dx 1 10 > perf/iostat_julia_insertion.txt & IOP=$!
+/usr/bin/time -v julia julia/main.jl 2> perf/julia_insertion_time.txt <<EOF
+data/student-data.csv
+i
+$COL
+q
+EOF
+wait $IOP
+
+# ---- JAVA: bubble (NO EXPORT: 'q') ----
+iostat -dx 1 10 > perf/iostat_java_bubble.txt & IOP=$!
+/usr/bin/time -v java -cp java/out Main 2> perf/java_bubble_time.txt <<EOF
+data/student-data.csv
+b
+$COL
+q
+EOF
+wait $IOP
+
+# ---- JAVA: insertion (NO EXPORT: 'q') ----
+iostat -dx 1 10 > perf/iostat_java_insertion.txt & IOP=$!
+/usr/bin/time -v java -cp java/out Main 2> perf/java_insertion_time.txt <<EOF
+data/student-data.csv
+i
+$COL
+q
+EOF
+wait $IOP
+
+echo
+echo "Measurements complete (no CSVs exported)."
+echo "Logs saved to: perf/"
+echo "  - perf/julia_bubble_time.txt"
+echo "  - perf/julia_insertion_time.txt"
+echo "  - perf/java_bubble_time.txt"
+echo "  - perf/java_insertion_time.txt"
+echo "  - perf/iostat_*.txt"
+
+
+
